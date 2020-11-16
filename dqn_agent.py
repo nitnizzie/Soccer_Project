@@ -72,9 +72,12 @@ class Agent():
         #Initialize Replay Memory
         self.memory = ReplayMemory(BUFFER_SIZE)
 
-        #Initialize target network
-        self.policy_net = DQN(state_dim, action_dim).to(device)
-        self.target_net = DQN(state_dim, action_dim).to(device)
+
+
+        # Initialize target network
+		# There will be 9 kinds of outputs: [foward, side, turn] 3 * 3 * 3 = 9
+        self.policy_net = DQN(state_dim, action_dim, 9).to(device)
+        self.target_net = DQN(state_dim, action_dim, 9).to(device)
 
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
