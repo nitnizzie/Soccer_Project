@@ -73,11 +73,10 @@ class Agent():
         self.memory = ReplayMemory(BUFFER_SIZE)
 
 
-
         # Initialize target network
-		# There will be 9 kinds of outputs: [foward, side, turn] 3 * 3 * 3 = 9
-        self.policy_net = DQN(state_dim, action_dim, 9).to(device)
-        self.target_net = DQN(state_dim, action_dim, 9).to(device)
+        # There will be 9*9 kinds of outputs: [foward, side, turn] 3 * 3 * 3 = 9
+        self.policy_net = DQN(state_dim, action_dim, 81).to(device)
+        self.target_net = DQN(state_dim, action_dim, 81).to(device)
 
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
@@ -96,8 +95,8 @@ class Agent():
                 # 최대 결과의 두번째 열은 최대 요소의 주소값이므로,
                 # 기대 보상이 더 큰 행동을 선택할 수 있습니다.
                 return self.policy_net(state).max(1)[1].view(1, 1)
-        else:
-            return torch.tensor([[random.randrange(n_actions)]], device=self.device, dtype=torch.long)
+        else:	#n_actions = 9, reasoned above
+            return torch.tensor([[random.randrange(81)]], device=self.device, dtype=torch.long)
 
     def reset(self):
         return
