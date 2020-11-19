@@ -84,8 +84,7 @@ class Agent():
 
     def select_action(self, state, steps_done):
         sample = random.random()
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-            math.exp(-1. * steps_done / EPS_DECAY)
+        eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
         steps_done += 1
         if sample > eps_threshold:
             with torch.no_grad():
@@ -99,8 +98,8 @@ class Agent():
     def reset(self):
         return
 
-    def store_transtion(self, state, action ,next_state, reward):
-        self.memory.push(state, action, next_state, reward)
+    def store_transtion(self, state, action, reward, next_state):
+        self.memory.push(state, action, reward, next_state)
 
     def train(self):
         #keep adding experiences to the memory until there are at least minibatch size samples
