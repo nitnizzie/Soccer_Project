@@ -6,14 +6,11 @@ env = UnityEnvironment(file_name = 'CoE202')
 
 env.reset()
 behavior_name_1 = list(env.behavior_specs)[0]
-
 behavior_name_2 = list(env.behavior_specs)[1]
 
 #print('b_n',env.brains)
 decision_steps_p, _ = env.get_steps(behavior_name_1)
-
 decision_steps_b, _ = env.get_steps(behavior_name_2)
-
 cur_obs_b = decision_steps_b.obs[0][0,:]
 empty_list=[]
 
