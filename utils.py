@@ -47,9 +47,9 @@ def step(decision_steps):
     state_1 = np.concatenate((signal_front_1, signal_back_1), axis=1)         #(3, 14, 8, 1)
     state_2 = np.concatenate((signal_front_2, signal_back_2), axis=1)         #(3, 14, 8, 1)
 
-    state = np.concatenate((state_1, state_2), axis=-1) #(3, 14, 8, 2)
+    # state = np.concatenate((state_1, state_2), axis=-1) #(3, 14, 8, 2)
 
     reward = np.array(decision_steps.reward)
 
-    return state, reward
-    #return signal_front_1, signal_back_1, signal_front_2, signal_back_2, reward
+    return state_1, state_2, reward
+    # return state, reward
