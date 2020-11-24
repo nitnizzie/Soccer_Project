@@ -36,20 +36,17 @@ def sensor_back_sig(data):
 def step(decision_steps):
 
     #Get Signal From Agent 1
-    signal_front_1 = np.expand_dims(np.array(sensor_front_sig(decision_steps.obs[0][0,:])), axis= -1)   #(3, 11, 8, 1)
-    signal_back_1 = np.expand_dims(np.array(sensor_back_sig(decision_steps.obs[1][0,:])), axis= -1)     #(3, 3, 8, 1)
+    signal_front_1 = np.array(sensor_front_sig(decision_steps.obs[0][0,:]))   #(3, 11, 8)
+    signal_back_1 = np.array(sensor_back_sig(decision_steps.obs[1][0,:]))     #(3, 3, 8)
 
     #Get Signal From Agent 2
-    signal_front_2 = np.expand_dims(np.array(sensor_front_sig(decision_steps.obs[0][1,:])), axis=-1)    #(3, 11, 8, 1)
-    signal_back_2 = np.expand_dims(np.array(sensor_back_sig(decision_steps.obs[1][1,:])), axis=-1)      #(3, 3, 8, 1)
+    signal_front_2 = np.array(sensor_front_sig(decision_steps.obs[0][1,:]))    #(3, 11, 8)
+    signal_back_2 = np.array(sensor_back_sig(decision_steps.obs[1][1,:]))      #(3, 3, 8)
 
     #preprocess state
-    state_1 = np.concatenate((signal_front_1, signal_back_1), axis=1)         #(3, 14, 8, 1)
-    state_2 = np.concatenate((signal_front_2, signal_back_2), axis=1)         #(3, 14, 8, 1)
-
-    # state = np.concatenate((state_1, state_2), axis=-1) #(3, 14, 8, 2)
+    state_1 = np.concatenate((signal_front_1, signal_back_1), axis=1)         #(3, 14, 8)
+    state_2 = np.concatenate((signal_front_2, signal_back_2), axis=1)         #(3, 14, 8)
 
     reward = np.array(decision_steps.reward)
 
     return state_1, state_2, reward
-    # return state, reward

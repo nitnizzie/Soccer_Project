@@ -46,12 +46,7 @@ state_b, reward_b = step(decision_steps_b)
 state_p, reward_p = step(decision_steps_p)
 
 
-'''
-# front[2], back[2] : current time values
-print(front_b1[0])
-print(front_b1[1])
-print(front_b1[2])
-'''
+
 
 agent_b = Agent(state_dim=5, action_dim=1, device=device)
 agent_p = Agent(state_dim=5, action_dim=1, device=device)
