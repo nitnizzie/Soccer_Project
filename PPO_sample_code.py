@@ -106,7 +106,7 @@ class ActorCritic(nn.Module):
         return action
 
     def evaluate(self, state, action):
-        state = torch.tensor(state).float().to(device)
+        state = state.clone().float().to(device)#torch.tensor(state).float().to(device)
         action_probs = self.action_layer(state)
         action_probs = action_probs.tolist()
         action_probs = action_probs[0]
@@ -338,21 +338,35 @@ def main():
 
             decision_steps_p, terminal_steps_p = env.get_steps(purple_team)
             decision_steps_b, terminal_steps_b = env.get_steps(blue_team)
-
-            reward = 0
+          #  print(decision_steps_b.reward)
+          #  print(terminal_steps_p.reward)
+          #  print(terminal_steps_b.reward)
+          #  print(decision_steps_b.obs)
+            reward_b = 0
+            reward_p = 0
             done = False
 
+            if not decision_steps_b:
+                done = True
+                reward_b = terminal_steps_b.reward[0]
+                reward_p = terminal_steps_p.reward[0]
             # state_p, state_b
 
-            memory_b.rewards.append(reward)
+            memory_b.rewards.append(reward_b)
+            memory_p.rewards.append(reward_p)
             memory_b.is_terminals.append(done)
-            print(memory_b)
-            if timestep % update_timestep == 0:
-                ppo_1.update(memory_1)
-                memory_1.clear_memory()
+            memory_p.is_terminals.append(done)
+            #print(memory_b.rewards)
+            #print(memory_b.is_terminals)
+            #print(memory_b.rewards)
+            if timestep % update_timestep == 0:		#memory 오타 수정
+                ppo_1.update(memory_b)
+                ppo_2.update(memory_p)
+                memory_p.clear_memory()
+                memory_b.clear_memory()
                 timestep = 0
 
-            running_reward_p += reward
+            running_reward_p += reward_p
 
             if done:
                 break
