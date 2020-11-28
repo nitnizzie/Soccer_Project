@@ -38,6 +38,27 @@ def step(decision_steps):
     state_1 = np.concatenate((signal_front_1, signal_back_1), axis=1)         #(3, 14, 8)
     state_2 = np.concatenate((signal_front_2, signal_back_2), axis=1)         #(3, 14, 8)
 
-    reward = np.array(decision_steps.reward)
+    if not decision_steps:
+        done = True
+        reward = terminal_steps.reward[0]
+    else:
+        done = False
+        reward = decision_steps.reward[0]
 
-    return state_1, state_2, reward
+
+    return state_1, state_2, reward, done
+
+def change_action_shape(action_1, action_2):
+
+    a1 = action_1 // 9
+    remain_1 = action_1 % 9
+    b1 = remain_1 // 3
+    c1 = remain_1 % 3
+
+    a2 = action_2 // 9
+    remain_2 = action_2 % 9
+    b2 = remain_2 // 3
+    c2 = remain_2 % 3
+
+    action = np.array([(a1, b1, c1), (a2, b2, c2)])
+    return action
