@@ -104,6 +104,8 @@ class PPO:
 
         self.MseLoss = nn.MSELoss()
 
+        self.device = device
+
     def update(self, memory):
         # Monte Carlo estimate of state rewards:
         rewards = []
@@ -115,13 +117,13 @@ class PPO:
             rewards.insert(0, discounted_reward)
 
         # Normalizing the rewards:
-        rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
+        rewards = torch.tensor(rewards, dtype=torch.float32).to(self.device)
         rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
         # convert list to tensor
-        old_states = torch.stack(memory.states).to(device).detach()
-        old_actions = torch.stack(memory.actions).to(device).detach()
-        old_logprobs = torch.stack(memory.logprobs).to(device).detach()
+        old_states = torch.stack(memory.states).to(self.device).detach()
+        old_actions = torch.stack(memory.actions).to(self.device).detach()
+        old_logprobs = torch.stack(memory.logprobs).to(self.device).detach()
 
         # Optimize policy for K epochs:
         for _ in range(self.K_epochs):
