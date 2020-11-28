@@ -34,7 +34,7 @@ class Memory:
 class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_dim, n_latent_var):
         super(ActorCritic, self).__init__()
-        # input_dimension : 1 * 3 * 28 * 8
+        # input_dimension : 2000 * (3 * 28 * 8
         # n_latent_var : 연산에 대한 매개변수?, Softmax로 가장 큰 값을 가지는 것을 action
         # actor
         self.action_layer = nn.Sequential(
@@ -63,7 +63,8 @@ class ActorCritic(nn.Module):
         raise NotImplementedError
 
     def act(self, state, memory):
-        state = torch.tensor(state).float().to(device)
+        update_state = torch.tensor(state).float().to(device)
+        state = torch.tensor([state]).float().to(device)
         action_probs = self.action_layer(state)
         action_probs = action_probs.tolist()
         action_probs = action_probs[0]
@@ -99,7 +100,7 @@ class ActorCritic(nn.Module):
 
 
 
-        memory.states.append(state)
+        memory.states.append(update_state)
         memory.actions.append(action)
         memory.logprobs.append(dist.log_prob(action))
 
@@ -217,7 +218,8 @@ def add_sensor_sig(a, b, c, d):
             active.append(ddd[k][0:])
         Final_signal.append(active)
     F.append(Final_signal)
-    return F
+    #return F
+    return Final_signal
 
 def sensor_front_sig(data):
     player=[]
@@ -257,9 +259,9 @@ def main():
     solved_reward = 10
     log_interval = 20
     max_episodes = 50000
-    max_timesteps = 500
+    max_timesteps = 500		#T
     n_latent_var = 1
-    update_timestep = 2000
+    update_timestep = 500#2000
     lr = 0.002
     betas = (0.9, 0.999)
     gamma = 0.99
@@ -319,7 +321,7 @@ def main():
             signal_p_2 = sensor_front_sig(decision_steps_p.obs[0][1, :])
             signal_back_p_1 = sensor_back_sig(decision_steps_p.obs[1][0, :])
             signal_back_p_2 = sensor_back_sig(decision_steps_p.obs[1][1, :])  # back_signal before 3 steps
-            state_p = add_sensor_sig(signal_p_1, signal_back_p_1, signal_p_2, signal_back_p_2)
+            state_p = add_sensor_sig(signal_p_1, signal_back_p_1, signal_p_2, signal_back_p_2)			
             state_p = np.array(state_p)
 
             act_p = ppo_1.policy_old.act(state_p, memory_p)
