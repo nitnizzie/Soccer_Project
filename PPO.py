@@ -32,8 +32,8 @@ class Memory:
 class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_dim, n_latent_var, device="cpu"):
         '''
-        input shape : (N, 3, 14, 3)
-        output shape : (N, 3, 3)
+        input shape : (N, 3*14*3)
+        output shape : (N, 3*3*3)
         '''
         super(ActorCritic, self).__init__()
 
@@ -202,7 +202,7 @@ def main():
         state_p1, state_p2, reward_p, done = step(decision_steps_p)
         state_b1, state_b2, reward_b, _ = step(decision_steps_b)
 
-        print(state_b1.shape, reward_b)
+        #print(state_b1.shape, reward_b)
         
         for t in range(max_timesteps):
             timestep += 1
@@ -211,8 +211,8 @@ def main():
             act_p1 = ppo_p.policy_old.act(state_p1, memory_p)
             act_p2 = ppo_p.policy_old.act(state_p2, memory_p)
             
-            act_b1 = ppo_p.policy_old.act(state_b1, memory_p)
-            act_b2 = ppo_p.policy_old.act(state_b2, memory_p)
+            act_b1 = ppo_p.policy_old.act(state_b1, memory_b)
+            act_b2 = ppo_p.policy_old.act(state_b2, memory_b)
 
             # Set the actions
             action_p = change_action_shape(act_p1, act_p2)
@@ -235,9 +235,13 @@ def main():
 
             # Saving reward and is_terminal:
             memory_p.rewards.append(reward_p)
+            memory_p.rewards.append(reward_p)
+            memory_p.is_terminals.append(done)
             memory_p.is_terminals.append(done)
 
             memory_b.rewards.append(reward_b)
+            memory_b.rewards.append(reward_b)
+            memory_b.is_terminals.append(done)
             memory_b.is_terminals.append(done)
 
             # update if its time
