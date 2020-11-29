@@ -165,7 +165,7 @@ def main():
     solved_reward = 10 #230     # stop training if avg_reward > solved_reward
     log_interval = 20           # print avg reward in the interval
     max_episodes = 50000        # max training episodes
-    max_timesteps = 300         # max timesteps in one episode
+    max_timesteps = 250         # max timesteps in one episode
     n_latent_var = 64           # number of variables in hidden layer
     update_timestep = 500       # update policy every n timesteps
     lr = 0.002
@@ -186,10 +186,15 @@ def main():
     ppo_b = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip, device)
 
     #logging variables
+    best_reward = -np.inf
+    saved_reward = -np.inf
+    saved_ep = 0
+
     running_reward_p = 0
     running_reward_b = 0
     avg_length = 0
     timestep = 0
+
 
 
     #training loop
@@ -199,8 +204,8 @@ def main():
         decision_steps_p, terminal_steps_p = env.get_steps(purple_team)
         decision_steps_b, terminal_steps_b = env.get_steps(blue_team)
 
-        state_p1, state_p2, reward_p, done = step(decision_steps_p, terminal_steps_p)
-        state_b1, state_b2, reward_b, _ = step(decision_steps_b, terminal_steps_b)
+        state_p1, state_p2, reward_p, done = step(decision_steps_p)
+        state_b1, state_b2, reward_b, _ = step(decision_steps_b)
 
         #print(state_b1.shape, reward_b)
         
@@ -230,8 +235,8 @@ def main():
             decision_steps_p, terminal_steps_p = env.get_steps(purple_team)
             decision_steps_b, terminal_steps_b = env.get_steps(blue_team)
 
-            state_p1, state_p2, reward_p, done = step(decision_steps_p, terminal_steps_p)
-            state_b1, state_b2, reward_b, _ = step(decision_steps_b, terminal_steps_b)
+            state_p1, state_p2, reward_p, done = step(decision_steps_p)
+            state_b1, state_b2, reward_b, _ = step(decision_steps_b)
 
             # Saving reward and is_terminal:
             memory_p.rewards.append(reward_p)
@@ -260,16 +265,32 @@ def main():
 
         avg_length += t
 
-        # stop training if avg_reward > solved_reward
-        if running_reward_p > (log_interval * solved_reward):
-            print("########## PPO_p has scored over solved_reward! ##########")
-            torch.save(ppo_p.policy.state_dict(), './PPO_p_{}.pth'.format("CoE202"))
-            break
+        #if purple team got over best_reward
+        if running_reward_p > best_reward:
+            # Save purple team's trained model
+            torch.save(ppo_p.policy.state_dict(), 'models/PPO.pth')
 
-        if running_reward_b > (log_interval * solved_reward):
-            print("########## PPO_b has scored over solved_reward! ##########")
-            torch.save(ppo_b.policy.state_dict(), './PPO_b_{}.pth'.format("CoE202"))
-            break
+            # copy model to blue team
+            ppo_b.policy.load_state_dict(ppo_p.policy.state_dict())
+
+            best_reward = running_reward_p
+            saved_reward = running_reward_p
+            saved_ep = i_episode + 1
+            print("Last model saved with reward_p: {:.2f}, at episode {}.".format(saved_reward, saved_ep))
+
+        #if purple team got over best_reward
+        if running_reward_b > best_reward:
+            # Save bule team's trained model
+            torch.save(ppo_b.policy.state_dict(), 'models/PPO.pth')
+
+            # copy model to purple team
+            ppo_p.policy.load_state_dict(ppo_b.policy.state_dict())
+
+            best_reward = running_reward_p
+            best_reward = running_reward_b
+            saved_reward = running_reward_b
+            saved_ep = i_episode + 1
+            print("Last model saved with reward_b: {:.2f}, at episode {}.".format(saved_reward, saved_ep))
 
         # logging
         if i_episode % log_interval == 0:

@@ -24,7 +24,7 @@ def sensor_back_sig(data):
 
     return sensor_data
 
-def step(decision_steps, terminal_steps):
+def step(decision_steps):
 
     #Get Signal From Agent 1
     signal_front_1 = np.array(sensor_front_sig(decision_steps.obs[0][0,:]))   #(3, 11, 8)
@@ -41,7 +41,7 @@ def step(decision_steps, terminal_steps):
     reward = decision_steps.reward[0]
     done = (reward != 0.0)
     #print(reward, done)
-    if done: print("goal!")
+    if done: print("goal! reward =", reward)
 
     return state_1, state_2, reward, done
 
