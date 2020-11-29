@@ -190,16 +190,18 @@ def main():
     saved_reward = -np.inf
     saved_ep = 0
 
-    running_reward_p = 0
-    running_reward_b = 0
+    avg_reward_p = 0
+    avg_reward_b = 0
+
     avg_length = 0
     timestep = 0
-
-
 
     #training loop
     for i_episode in range(max_episodes):
         env.reset()
+    
+        ep_reward_p = 0
+        ep_reward_b = 0
 
         decision_steps_p, terminal_steps_p = env.get_steps(purple_team)
         decision_steps_b, terminal_steps_b = env.get_steps(blue_team)
@@ -257,50 +259,51 @@ def main():
                 memory_b.clear_memory()
                 timestep = 0
 
-            running_reward_p += reward_p
-            running_reward_b += reward_b
+            ep_reward_p += reward_p
+            ep_reward_b += reward_b
 
             if done:
                 break
 
+        avg_reward_p += ep_reward_p
+        avg_reward_b += ep_reward_b
         avg_length += t
 
         #if purple team got over best_reward
-        if running_reward_p > best_reward:
+        if ep_reward_p > best_reward:
             # Save purple team's trained model
             torch.save(ppo_p.policy.state_dict(), 'models/PPO.pth')
 
             # copy model to blue team
             ppo_b.policy.load_state_dict(ppo_p.policy.state_dict())
 
-            best_reward = running_reward_p
-            saved_reward = running_reward_p
+            best_reward = ep_reward_p
+            saved_reward = ep_reward_p
             saved_ep = i_episode + 1
             print("Last model saved with reward_p: {:.2f}, at episode {}.".format(saved_reward, saved_ep))
 
         #if purple team got over best_reward
-        if running_reward_b > best_reward:
+        if ep_reward_b > best_reward:
             # Save bule team's trained model
             torch.save(ppo_b.policy.state_dict(), 'models/PPO.pth')
 
             # copy model to purple team
             ppo_p.policy.load_state_dict(ppo_b.policy.state_dict())
 
-            best_reward = running_reward_p
-            best_reward = running_reward_b
-            saved_reward = running_reward_b
+            best_reward = ep_reward_b
+            saved_reward = ep_reward_b
             saved_ep = i_episode + 1
             print("Last model saved with reward_b: {:.2f}, at episode {}.".format(saved_reward, saved_ep))
 
         # logging
         if i_episode % log_interval == 0:
             avg_length = int(avg_length / log_interval)
-            running_reward_p = int((running_reward_p / log_interval))
-            running_reward_b = int((running_reward_p / log_interval))
+            avg_reward_p = (avg_reward_p / log_interval)
+            avg_reward_b = (avg_reward_b / log_interval)
 
-            print('Episode {} \t avg length: {} \t reward_p: {} \t reward_b: {}'.format(i_episode, avg_length, running_reward_p, running_reward_b))
-            running_reward_p = 0
-            running_reward_b = 0
+            print('Episode {} \t avg length: {} \t reward_p: {} \t reward_b: {}'.format(i_episode, avg_length, avg_reward_p, avg_reward_b))
+            avg_reward_p = 0
+            avg_reward_b = 0
             avg_length = 0
 
     env.close()
