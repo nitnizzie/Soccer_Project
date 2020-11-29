@@ -185,6 +185,9 @@ def main():
     ppo_p = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip, device)
     ppo_b = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip, device)
 
+    #ppo_p.policy_old.load_state_dict(torch.load('model/PPO.pth'))
+    #ppo_b.policy_old.load_state_dict(torch.load('model/PPO.pth'))
+
     #logging variables
     best_reward = -np.inf
     saved_reward = -np.inf
@@ -301,7 +304,7 @@ def main():
             avg_reward_p = (avg_reward_p / log_interval)
             avg_reward_b = (avg_reward_b / log_interval)
 
-            print('Episode {} \t avg length: {} \t reward_p: {} \t reward_b: {}'.format(i_episode, avg_length, avg_reward_p, avg_reward_b))
+            print('Episode {} \t avg length: {} \t reward_p: {:.4f} \t reward_b: {:.4f}'.format(i_episode, avg_length, avg_reward_p, avg_reward_b))
             avg_reward_p = 0
             avg_reward_b = 0
             avg_length = 0
