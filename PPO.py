@@ -174,6 +174,7 @@ def main():
     K_epochs = 4                # update policy for K epochs
     eps_clip = 0.2              # clip parameter for PPO
 
+    PATH = 'models/PPO.pth'
 
     purple_team = list(env.behavior_specs)[0]
     blue_team = list(env.behavior_specs)[1]
@@ -185,8 +186,9 @@ def main():
     ppo_p = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip, device)
     ppo_b = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip, device)
 
-    #ppo_p.policy_old.load_state_dict(torch.load('model/PPO.pth'))
-    #ppo_b.policy_old.load_state_dict(torch.load('model/PPO.pth'))
+    print("load model from ", PATH)
+    ppo_p.policy_old.load_state_dict(torch.load(PATH))
+    ppo_b.policy_old.load_state_dict(torch.load(PATH))
 
     #logging variables
     best_reward = -np.inf
@@ -242,6 +244,7 @@ def main():
 
             state_p1, state_p2, reward_p, done = step(decision_steps_p)
             state_b1, state_b2, reward_b, _ = step(decision_steps_b)
+            # print(state_b1[2][0][-1].item())
 
             # Saving reward and is_terminal:
             memory_p.rewards.append(reward_p)
@@ -275,7 +278,7 @@ def main():
         #if purple team got over best_reward
         if ep_reward_p > best_reward:
             # Save purple team's trained model
-            torch.save(ppo_p.policy.state_dict(), 'models/PPO.pth')
+            torch.save(ppo_p.policy.state_dict(), PATH)
 
             # copy model to blue team
             ppo_b.policy.load_state_dict(ppo_p.policy.state_dict())
@@ -288,7 +291,7 @@ def main():
         #if purple team got over best_reward
         if ep_reward_b > best_reward:
             # Save bule team's trained model
-            torch.save(ppo_b.policy.state_dict(), 'models/PPO.pth')
+            torch.save(ppo_b.policy.state_dict(), PATH)
 
             # copy model to purple team
             ppo_p.policy.load_state_dict(ppo_b.policy.state_dict())
