@@ -348,6 +348,7 @@ def main():
 
             decision_steps_p, terminal_steps_p = env.get_steps(purple_team)
             decision_steps_b, terminal_steps_b = env.get_steps(blue_team)
+
             #print(decision_steps_b.reward)
             #print(decision_steps_p.reward)
             #print(terminal_steps_p.reward)
@@ -357,12 +358,12 @@ def main():
             reward_p = 0
             done = False
 
-            if (decision_steps_b.reward[0] != 0):
+            if (len(terminal_steps_b.reward) != 0):
                 done = True
-                print(decision_steps_b.reward)
-                print(decision_steps_p.reward)
-                reward_b = decision_steps_b.reward[0]
-                reward_p = decision_steps_p.reward[0]
+                #print(terminal_steps_b.reward)
+                #print(terminal_steps_p.reward)
+                reward_b = terminal_steps_b.reward[0]
+                reward_p = terminal_steps_p.reward[0]
             # state_p, state_b
 
             memory_b.rewards.append(reward_b)
