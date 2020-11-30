@@ -52,20 +52,29 @@ class ActorCritic(nn.Module):
 
         # critic, 수정 필요
         self.value_layer = nn.Sequential(
-            nn.Linear(state_dim, n_latent_var),
-            nn.Tanh(),
-            nn.Linear(n_latent_var, n_latent_var),
-            nn.Tanh(),
-            nn.Linear(n_latent_var, 1)
+            nn.Conv2d(in_channels = 3, out_channels = 6, kernel_size = (5,2) , stride = 1, padding = 0, padding_mode = 'zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels = 6, out_channels=4, kernel_size=(6, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels= 4, out_channels=3, kernel_size=(6, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels=3, out_channels=2, kernel_size=(5, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels=2, out_channels=1, kernel_size=(5, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU()
         )
 
     def forward(self):
         raise NotImplementedError
 
     def act(self, state, memory):
+       
         update_state = torch.tensor(state).float().to(device)
         state = torch.tensor([state]).float().to(device)
+
         action_probs = self.action_layer(state)
+
+
         action_probs = action_probs.tolist()
         action_probs = action_probs[0]
         action_probs = action_probs[0]
@@ -84,10 +93,14 @@ class ActorCritic(nn.Module):
             acti = action_probs[i]
             acti = torch.tensor(acti)
             dist = Categorical(acti)
-            actio = dist.sample()
-            actio = actio.tolist()
+            action_ = dist.sample()
+            actio = action_.tolist()
             action_list.append(actio)
-
+			
+        memory.states.append(update_state)
+        memory.actions.append(action_)
+        memory.logprobs.append(dist.log_prob(action_))
+		
         action = []
         l = 0
         for i in range(2):
@@ -97,13 +110,6 @@ class ActorCritic(nn.Module):
             l = 3
             action.append(act_set)
         action = torch.tensor(action)
-
-
-
-        memory.states.append(update_state)
-        memory.actions.append(action)
-        memory.logprobs.append(dist.log_prob(action))
-
         return action
 
     def evaluate(self, state, action):
@@ -157,6 +163,7 @@ class PPO:
         self.MseLoss = nn.MSELoss()
 
     def update(self, memory):
+        #torch.autograd.set_detect_anomaly(True)
         # Monte Carlo estimate of state rewards:
         rewards = []
         discounted_reward = 0
@@ -171,27 +178,28 @@ class PPO:
         rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
         # convert list to tensor
-        old_states = torch.stack(memory.states).to(device).detach()
-        old_actions = torch.stack(memory.actions).to(device).detach()
-        old_logprobs = torch.stack(memory.logprobs).to(device).detach()
-
+        old_states = torch.stack(memory.states).clone().to(device).detach()
+        old_actions = torch.stack(memory.actions).clone().to(device).detach()
+        old_logprobs = torch.stack(memory.logprobs).clone().to(device).detach()
+        #print(rewards)
         # Optimize policy for K epochs:
         for _ in range(self.K_epochs):
             # Evaluating old actions and values :
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
 
-            # Finding the ratio (pi_theta / pi_theta__old):
-            ratios = torch.exp(logprobs - old_logprobs.detach())
+            for i in range(len(logprobs)):
+                # Finding the ratio (pi_theta / pi_theta__old):
+                ratios = torch.exp(logprobs[i].clone() - old_logprobs.clone().detach())
 
-            # Finding Surrogate Loss:
-            advantages = rewards - state_values.detach()
-            surr1 = ratios * advantages
-            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
-            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
+                # Finding Surrogate Loss:
+                advantages = rewards[i].clone() - state_values[i].clone().detach()
+                surr1 = ratios[i].clone() * advantages
+                surr2 = torch.clamp(ratios[i].clone(), 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+                loss = -torch.min(surr1.clone(), surr2.clone()) + 0.5 * self.MseLoss(state_values[i].clone(), rewards[i].clone()) - 0.01 * dist_entropy[i].clone()
 
-            # take gradient step
+            #take gradient step
             self.optimizer.zero_grad()
-            loss.mean().backward()
+            loss.clone().mean().backward()
             self.optimizer.step()
 
         # Copy new weights into old policy:
@@ -257,11 +265,11 @@ def main():
     state_dim = 1
     action_dim = 1
     solved_reward = 10
-    log_interval = 20
+    log_interval = 1
     max_episodes = 50000
-    max_timesteps = 500		#T
+    max_timesteps = 250		#500	#T 
     n_latent_var = 1
-    update_timestep = 500#2000
+    update_timestep = 250 #2000
     lr = 0.002
     betas = (0.9, 0.999)
     gamma = 0.99
@@ -330,7 +338,7 @@ def main():
             # state_p, reward_p, done_b, _ = env.step(act_p_sp)
             act_b = ppo_2.policy_old.act(state_b, memory_b)
             act_b_sp = act_b.reshape(6)
-            print('act_p_sp : ', act_p_sp)
+            #print('act_p_sp : ', act_p_sp)
 
             # Set the actions
             env.set_actions(purple_team, np.array(act_p))
@@ -340,18 +348,21 @@ def main():
 
             decision_steps_p, terminal_steps_p = env.get_steps(purple_team)
             decision_steps_b, terminal_steps_b = env.get_steps(blue_team)
-          #  print(decision_steps_b.reward)
-          #  print(terminal_steps_p.reward)
-          #  print(terminal_steps_b.reward)
+            #print(decision_steps_b.reward)
+            #print(decision_steps_p.reward)
+            #print(terminal_steps_p.reward)
+            #print(terminal_steps_b.reward)
           #  print(decision_steps_b.obs)
             reward_b = 0
             reward_p = 0
             done = False
 
-            if not decision_steps_b:
+            if (decision_steps_b.reward[0] != 0):
                 done = True
-                reward_b = terminal_steps_b.reward[0]
-                reward_p = terminal_steps_p.reward[0]
+                print(decision_steps_b.reward)
+                print(decision_steps_p.reward)
+                reward_b = decision_steps_b.reward[0]
+                reward_p = decision_steps_p.reward[0]
             # state_p, state_b
 
             memory_b.rewards.append(reward_b)
@@ -362,8 +373,8 @@ def main():
             #print(memory_b.is_terminals)
             #print(memory_b.rewards)
             if timestep % update_timestep == 0:		#memory 오타 수정
-                ppo_1.update(memory_b)
-                ppo_2.update(memory_p)
+                ppo_1.update(memory_p)
+                ppo_2.update(memory_b)
                 memory_p.clear_memory()
                 memory_b.clear_memory()
                 timestep = 0
