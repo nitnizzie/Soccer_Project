@@ -52,59 +52,38 @@ class ActorCritic(nn.Module):
 
         # critic, 수정 필요
         self.value_layer = nn.Sequential(
-            nn.Linear(state_dim, n_latent_var),
-            nn.Tanh(),
-            nn.Linear(n_latent_var, n_latent_var),
-            nn.Tanh(),
-            nn.Linear(n_latent_var, 1)
+            nn.Conv2d(in_channels = 3, out_channels = 6, kernel_size = (5,2) , stride = 1, padding = 0, padding_mode = 'zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels = 6, out_channels=4, kernel_size=(6, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels= 4, out_channels=3, kernel_size=(6, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels=3, out_channels=2, kernel_size=(5, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU(),
+            nn.Conv2d(in_channels=2, out_channels=1, kernel_size=(5, 2), stride=1, padding=0, padding_mode='zeros'),
+            nn.Tanh(), nn.ReLU()
         )
 
     def forward(self):
         raise NotImplementedError
 
     def act(self, state, memory):
+       
         update_state = torch.tensor(state).float().to(device)
         state = torch.tensor([state]).float().to(device)
+
+        #state = torch.reshape(state, (1, -1))
+        #print(state.shape)   #(1, 336)
+
         action_probs = self.action_layer(state)
-        action_probs = action_probs.tolist()
-        action_probs = action_probs[0]
-        action_probs = action_probs[0]
-        for i in range(6):
-            for j in range(3):
-                action_probs[i][j] = action_probs[i][j] + 0.1
-        # Normalize
-        action_list = []
-        for i in range(6):
-            acti = []
-            summ = 0
-            for j in range(3):
-                summ = summ + action_probs[i][j]
-            for j in range(3):
-                action_probs[i][j] = action_probs[i][j] / summ
-            acti = action_probs[i]
-            acti = torch.tensor(acti)
-            dist = Categorical(acti)
-            actio = dist.sample()
-            actio = actio.tolist()
-            action_list.append(actio)
-
-        action = []
-        l = 0
-        for i in range(2):
-            act_set = []
-            for j in range(3):
-                act_set.append(action_list[j+l])
-            l = 3
-            action.append(act_set)
-        action = torch.tensor(action)
-
-
-
+        dist = Categorical(action_probs)
+        action = dist.sample()
+        
         memory.states.append(update_state)
         memory.actions.append(action)
         memory.logprobs.append(dist.log_prob(action))
 
-        return action
+        return action.reshape(6)
 
     def evaluate(self, state, action):
         state = state.clone().float().to(device)#torch.tensor(state).float().to(device)
@@ -180,19 +159,20 @@ class PPO:
             # Evaluating old actions and values :
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
 
-            # Finding the ratio (pi_theta / pi_theta__old):
-            ratios = torch.exp(logprobs - old_logprobs.detach())
+            for i in range(len(logprobs)):
+                # Finding the ratio (pi_theta / pi_theta__old):
+                ratios = torch.exp(logprobs[i] - old_logprobs.detach())
 
-            # Finding Surrogate Loss:
-            advantages = rewards - state_values.detach()
-            surr1 = ratios * advantages
-            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
-            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
+                # Finding Surrogate Loss:
+                advantages = rewards[i] - state_values[i].detach()
+                surr1 = ratios * advantages
+                surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+                loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy[i]
 
-            # take gradient step
-            self.optimizer.zero_grad()
-            loss.mean().backward()
-            self.optimizer.step()
+                # take gradient step
+                self.optimizer.zero_grad()
+                loss.mean().backward()
+                self.optimizer.step()
 
         # Copy new weights into old policy:
         self.policy_old.load_state_dict(self.policy.state_dict())
@@ -259,9 +239,9 @@ def main():
     solved_reward = 10
     log_interval = 20
     max_episodes = 50000
-    max_timesteps = 500		#T
+    max_timesteps = 25		#500	#T 
     n_latent_var = 1
-    update_timestep = 500#2000
+    update_timestep = 25 #2000
     lr = 0.002
     betas = (0.9, 0.999)
     gamma = 0.99
@@ -348,7 +328,7 @@ def main():
             reward_p = 0
             done = False
 
-            if not decision_steps_b:
+            if (decision_steps_b.reward[0] != 0):
                 done = True
                 reward_b = terminal_steps_b.reward[0]
                 reward_p = terminal_steps_p.reward[0]
@@ -362,8 +342,8 @@ def main():
             #print(memory_b.is_terminals)
             #print(memory_b.rewards)
             if timestep % update_timestep == 0:		#memory 오타 수정
-                ppo_1.update(memory_b)
-                ppo_2.update(memory_p)
+                ppo_1.update(memory_p)
+                ppo_2.update(memory_b)
                 memory_p.clear_memory()
                 memory_b.clear_memory()
                 timestep = 0
