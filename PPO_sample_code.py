@@ -267,9 +267,9 @@ def main():
     solved_reward = 10
     log_interval = 1
     max_episodes = 50000
-    max_timesteps = 250		#500	#T 
+    max_timesteps = 500		#500	#T 
     n_latent_var = 1
-    update_timestep = 250 #2000
+    update_timestep = 2000 #2000
     lr = 0.002
     betas = (0.9, 0.999)
     gamma = 0.99
