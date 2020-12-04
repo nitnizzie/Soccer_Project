@@ -155,7 +155,7 @@ def main():
     print("device ", device, " is available")
 
     #set Unity Env
-    env = UnityEnvironment(file_name='CoE202')
+    env = UnityEnvironment(file_name='linux')
     env.reset()
 
 

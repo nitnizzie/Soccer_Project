@@ -48,19 +48,19 @@ def step(decision_steps, max_timesteps=250):
 
 def change_action_shape(action_1, action_2):
 
-    a1 = 0; b1 = 0; c1 = 0; a2 = 0; b2 = 0; b3 = 0;
+    a1 = 0; b1 = 0; c1 = 0; a2 = 0; b2 = 0; c2 = 0;
     if action_1 < 3:
         a1 = action_1
-    else if action_1 < 6:
+    elif action_1 < 6:
         b1 = action_1 - 3
     else:
         c1 = action_1 -6
     if action_2 < 3:
         a2 = action_2
-    else if action_2 < 6:
+    elif action_2 < 6:
         b2 = action_2 -3
     else:
-        c2 = acton_2 - 6
+        c2 = action_2 - 6
 
     action = np.array([(a1, b1, c1), (a2, b2, c2)])
     return action
