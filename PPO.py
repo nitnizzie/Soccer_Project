@@ -161,7 +161,7 @@ def main():
 
     #set Hyperparameters
     state_dim = 3 * 14 * 8
-    action_dim = 3 * 3
+    action_dim = 7
     solved_reward = 10 #230     # stop training if avg_reward > solved_reward
     log_interval = 20           # print avg reward in the interval
     max_episodes = 50000        # max training episodes

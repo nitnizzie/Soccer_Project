@@ -51,17 +51,16 @@ def change_action_shape(action_1, action_2):
     a1 = 0; b1 = 0; c1 = 0; a2 = 0; b2 = 0; c2 = 0;
     if action_1 < 3:
         a1 = action_1
-    elif action_1 < 6:
-        b1 = action_1 - 3
+    elif action_1 < 5:
+        b1 = action_1 - 2
     else:
-        c1 = action_1 -6
+        c1 = action_1 -4
     if action_2 < 3:
         a2 = action_2
-    elif action_2 < 6:
-        b2 = action_2 -3
+    elif action_2 < 5:
+        b2 = action_2 -2
     else:
-        c2 = action_2 - 6
-
+        c2 = action_2 - 4
     action = np.array([(a1, b1, c1), (a2, b2, c2)])
     return action
 
