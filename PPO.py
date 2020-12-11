@@ -186,9 +186,9 @@ def main():
     ppo_p = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip, device)
     ppo_b = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip, device)
 
-    print("load model from ", PATH)
-    ppo_p.policy_old.load_state_dict(torch.load(PATH))
-    ppo_b.policy_old.load_state_dict(torch.load(PATH))
+    # print("load model from ", PATH)
+    # ppo_p.policy_old.load_state_dict(torch.load(PATH))
+    # ppo_b.policy_old.load_state_dict(torch.load(PATH))
 
     #logging variables
     best_reward = -np.inf

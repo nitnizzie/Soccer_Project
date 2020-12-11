@@ -68,22 +68,22 @@ def get_reward(state_1, state_2, reward, max_timesteps):
 
     reward_ball = 0
 
-    # #if agent 1 is close to ball
-    # if dist1_after < 0.3:
-    #     reward_ball += 1
-    # else if 
+    #if agent 1 is close to ball
+    #if agent 2 is close to ball
+    reward_ball +=  1 - 2 * dist1_after
+    reward_ball +=  1 - 2 * dist2_after
 
-    #if agent 1 get closer to the ball
-    if dist1_before > dist1_after:
-        reward_ball += 1
-    else:
-        reward_ball -= 1
+    # #if agent 1 get closer to the ball
+    # if dist1_before > dist1_after:
+    #     reward_ball += 1
+    # else:
+    #     reward_ball -= 1
     
-    #if agent 2 get closer to the ball 
-    if dist2_before > dist2_after:
-        reward_ball += 1
-    else :
-        reward_ball -= 1
+    # #if agent 2 get closer to the ball 
+    # if dist2_before > dist2_after:
+    #     reward_ball += 1
+    # else :
+    #     reward_ball -= 1
 
     #final output
     reward_total = reward * max_timesteps + reward_ball

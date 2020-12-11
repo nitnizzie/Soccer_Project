@@ -63,7 +63,7 @@ for i in range(100):
     print(signal_back[0])
     
     # Set the actions
-    env.set_actions(behavior_name_1, np.array([(0,0,0),(0,0,0)]))
+    env.set_actions(behavior_name_1, np.array([(1,1,0),(2,2,0)]))
     env.set_actions(behavior_name_2, np.array([(0,0,0),(0,0,0)]))
     
     # Move the simulation forward
